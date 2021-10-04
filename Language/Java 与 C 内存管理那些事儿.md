@@ -1,3 +1,5 @@
+# Java 与 C 内存管理那些事儿
+## JVM 简单介绍
 ### 字节码文件
 [JVM 规范文档](https://docs.oracle.com/javase/specs/jvms/se16/html/index.html)
 >文件魔数：每个class文件的头4个字节称为魔数(Magic Number)，其值为：0xCAFEBABE，它的唯一作用是用于确定这个文件是否为一个能被虚拟机接受的class文件。使用魔数而不是扩展名来进行识别主要是基于安全的考虑，因为文件的扩展名可以随意地被改动。
