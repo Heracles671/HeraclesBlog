@@ -15,6 +15,8 @@ class MainActivity : AppCompatActivity() {
                 .commitNow()
         }
 
+        // kotlin的函数、匿名函数、lambda分别的声明
+        // 双冒号加函数名、匿名函数和 Lambda 本质上都是函数类型的对象
         fun a(data: String): String {
             return data
         }
