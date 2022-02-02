@@ -123,7 +123,7 @@ emulator
 # 编译 Android 内核源代码
 ```
 cd ~/Android/kernel/goldfish
-export PATH=$PATH:~/Android/prebuild/linux-86/toolchain/arm-eabi-4.4.3/bin
+export PATH=$PATH:~/Android/prebuilt/linux-x86/toolchain/arm-eabi-4.4.3/bin
 make goldfish_defconfig
 make
 
