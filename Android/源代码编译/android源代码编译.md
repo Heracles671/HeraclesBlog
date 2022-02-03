@@ -137,6 +137,7 @@ cat version
 
 # 单独编译 Android 应用程序模块
 ```
+source ./build/envsetup.sh
 mmm ./packages/experimental/HelloAndroid/
 make snod
 ```
