@@ -33,6 +33,7 @@
 1. [react-native-device-info](https://github.com/react-native-device-info/react-native-device-info) 获取设备信息
 ## Hook
 1. [react-hook-form](https://github.com/react-hook-form/react-hook-form) 表单管理
+2. [stale-while-revalidate](https://github.com/vercel/swr) 网络钩子
 ## 性能优化
 1. [why-did-you-render](https://github.com/welldone-software/why-did-you-render) 避免无效渲染
 ## 数据库
