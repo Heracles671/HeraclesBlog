@@ -27,6 +27,7 @@
 1. [lottie-react-native](https://github.com/lottie-react-native/lottie-react-native) 简单动效图
 2. [react-native-reanimated](https://github.com/software-mansion/react-native-reanimated) 高性能动画
 3. [react-native-gesture-handler](https://github.com/software-mansion/react-native-gesture-handler) 手势库
+4. [react-motion](https://github.com/chenglou/react-motion)
 ## 热更新
 1. [react-native-code-push](https://github.com/microsoft/react-native-code-push) 微软热更新
 ## 工具类
