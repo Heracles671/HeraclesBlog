@@ -681,3 +681,12 @@ function Imperative() {
 
 export default Imperative;
 ```
+----
+## useLayoutEffect
+我们第九个要学习的Hook(钩子函数)是useLayoutEffect，他的作用是“勾住”挂载或重新渲染完成这2个组件生命周期函数。useLayoutEffect使用方法、所传参数和useEffect完全相同。
+
+他们的不同点在于，你可以把useLayoutEffect等同于componentDidMount、componentDidUpdate，因为他们调用阶段是相同的。而useEffect是在componentDidMount、componentDidUpdate调用之后才会触发的。
+
+也就是说，当组件所有DOM都渲染完成后，同步调用useLayoutEffect，然后再调用useEffect。
+
+useLayoutEffect永远要比useEffect先触发完成。
