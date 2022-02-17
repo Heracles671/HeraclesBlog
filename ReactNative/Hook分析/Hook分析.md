@@ -614,3 +614,70 @@ function Forward() {
 }
 export default Forward;
 ```
+---
+## useImperativeHandle
+>它的作用是“勾住”子组件中某些函数(方法)供父组件调用。   
+useImperativeHandle可以让父组件获取并执行子组件内某些自定义函数(方法)。本质上其实是子组件将自己内部的函数(方法)通过useImperativeHandle添加到父组件中useRef定义的对象中。
+
+>步骤：  
+1、useRef创建引用变量   
+2、React.forwardRef将引用变量传递给子组件   
+3、useImperativeHandle将子组件内定义的函数作为属性，添加到父组件中的ref对象上。   
+
+>请注意：   
+1、这里面说的“勾住子组件内自定义函数”本质上是子组件将内部自定义的函数添加到父组件的ref.current上面。   
+2、父组件若想调用子组件暴露给自己的函数，可以通过 res.current.xxx 来访问或执行。   
+
+举例，若某子组件的需求为：   
+1、有变量count，默认值为0   
+2、有一个函数 addCount，该函数体内部执行 count+1   
+3、有一个按钮，点击按钮执行 addCount 函数   
+
+父组件的需求为：   
+1、父组件内使用上述子组件   
+2、父组件内有一个按钮，点击执行上述子组件内定义的函数 addCount 
+```
+import React,{useState,useImperativeHandle} from 'react'
+
+function ChildComponent(props,ref) {
+  const [count,setCount] =  useState(0); //子组件定义内部变量count
+  //子组件定义内部函数 addCount
+  const addCount = () => {
+    setCount(count + 1);
+  }
+  //子组件通过useImperativeHandle函数，将addCount函数添加到父组件中的ref.current中
+  useImperativeHandle(ref,() => ({addCount}));
+  return (
+    <div>
+        {count}
+        <button onClick={addCount}>child</button>
+    </div>
+  )
+}
+
+//子组件导出时需要被React.forwardRef包裹，否则无法接收 ref这个参数
+export default React.forwardRef(ChildComponent);
+```   
+```
+import React,{useRef} from 'react'
+import ChildComponent from './childComponent'
+
+function Imperative() {
+  const childRef = useRef(null); //父组件定义一个对子组件的引用
+
+  const clickHandle = () => {
+    childRef.current.addCount(); //父组件调用子组件内部 addCount函数
+  }
+
+  return (
+    <div>
+        {/* 父组件通过给子组件添加 ref 属性，将childRef传递给子组件，
+            子组件获得该引用即可将内部函数添加到childRef中 */}
+        <ChildComponent ref={childRef} />
+        <button onClick={clickHandle}>child component do somting</button>
+    </div>
+  )
+}
+
+export default Imperative;
+```
