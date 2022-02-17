@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {StyleSheet, Text, TouchableHighlight} from 'react-native';
-const UseStateDemo = () => {
+const UseHookDemo = () => {
   const initCount = 0;
   const [count, setCount] = useState(initCount);
 
@@ -40,4 +40,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default UseStateDemo;
+export default UseHookDemo;

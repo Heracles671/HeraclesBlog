@@ -4,8 +4,8 @@
 
 import {AppRegistry} from 'react-native';
 // import App from './App';
-import UseStateDemo from './demo/UseStateDemo';
+import UseHookDemo from './demo/UseHookDemo';
 import {name as appName} from './app.json';
 
 // AppRegistry.registerComponent(appName, () => App);
-AppRegistry.registerComponent(appName, () => UseStateDemo);
+AppRegistry.registerComponent(appName, () => UseHookDemo);
