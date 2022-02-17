@@ -180,3 +180,176 @@ function ChildComponent(){
 
 export default AppComponent;
 ```
+-----
+## useReducer
+在React源码中，实际上useState就是由useReducer实现的，所以useReducer准确来说是useState的原始版
+```
+import React, { useReducer } from 'react'; //引入useReducer
+
+//定义好“事件处理函数” reducer
+function reducer(state, action) {
+  switch (action) {
+    case 'xx':
+        return xxxx;
+    case 'xx':
+        return xxxx;
+    default:
+        return xxxx;
+  }
+}
+
+function Component(){
+  //声明一个变量xxx，以及对应修改xxx的dispatch
+  //将事件处理函数reducer和默认值initialValue作为参数传递给useReducer
+  const [xxx, dispatch] = useReducer(reducer, initialValue); 
+
+  //若想获取xxx的值，直接使用xxx即可
+  
+  //若想修改xxx的值，通过dispatch来修改
+  dispatch('xx');
+}
+
+//请注意，上述代码中的action只是最基础的字符串形式，事实上action可以是多属性的object，这样可以自定义更多属性和更多参数值
+//例如 action 可以是 {type:'xx',param:xxx}
+```
+举例：
+```
+import React, { useReducer } from 'react';
+
+function reducer(state,action){
+  //根据action.type来判断该执行哪种修改
+  switch(action.type){
+    case 'add':
+      //count 最终加多少，取决于 action.param 的值
+      return state + action.param;
+    case 'sub':
+      return state - action.param;
+    case 'mul':
+      return state * action.param;
+    default:
+      console.log('what?');
+      return state;
+  }
+}
+
+function getRandom(){
+  return Math.floor(Math.random()*10);
+}
+
+function CountComponent() {
+  const [count, dispatch] = useReducer(reducer,0);
+
+  return <div>
+    {count}
+    <button onClick={() => {dispatch({type:'add',param:getRandom()})}} >add</button>
+    <button onClick={() => {dispatch({type:'sub',param:getRandom()})}} >sub</button>
+    <button onClick={() => {dispatch({type:'mul',param:getRandom()})}} >mul</button>
+  </div>;
+}
+
+export default CountComponent;
+```
+个按钮只是负责通知reducer“我希望做什么事情”，具体怎么做完全由reducer来执行。这样实现了修改数据具体执行逻辑与按钮点击处理函数的抽离。
+
+如果不使用useReducer，而是使用之前学习过的useState，那么对count的每一种修改逻辑代码，都必须分散写在每个按钮的点击事件处理函数中。
+
+### useReducer + useContext 实现 Redux 的功能
+
+>实现原理   
+用 useContext 实现“获取全局数据”   
+用 userReducer 实现“修改全局数据”
+
+>实现思路   
+1、用React.createContext()定义一个全局数据对象；   
+2、在父组件中用 userReducer 定义全局变量xx和负责抛出修事件的dispatch；   
+3、在父组件之外，定义负责具体修改全局变量的处理函数reducer，根据修改xx事件类型和参数，执行修改xx的值；   
+4、在父组件中用 <XxxContext.Provider value={{xx,dispathc}}> 标签把 全局共享数据和负责抛出修改xx的dispatch 暴露给子组件；   
+5、在子组件中用 useContext 获取全局变量；   
+6、在子组件中用 xxContext.dispatch 去抛出修改xx的事件，携带修改事件类型和参数；
+
+共享对象代码：
+```
+import React from 'react';
+const CountContext = React.createContext();
+export default CountContext;
+```
+父组件代码：
+```
+import React, { useReducer } from 'react';
+import CountContext from './CountContext';
+import ComponentA from './ComponentA';
+import ComponentB from './ComponentB';
+import ComponentC from './ComponentC';
+
+const initialCount = 0; //定义count的默认值
+
+//修改count事件处理函数，根据修改参数进行处理
+function reducer(state, action) {
+//注意这里先判断事件类型，然后结合携带的参数param 来最终修改count
+switch (action.type) {
+    case 'add':
+        return state + action.param;
+    case 'sub':
+        return state - action.param;
+    case 'mul':
+        return state * action.param;
+    case 'reset':
+        return initialCount;
+    default:
+        console.log('what?');
+        return state;
+}
+}
+
+function ParentComponent() {
+  //定义全局变量count，以及负责抛出修改事件的dispatch
+  const [count, dispatch] = useReducer(reducer, initialCount);
+
+  //请注意：value={{count,dispatch} 是整个代码的核心，把将count、dispatch暴露给所有子组件
+  return <CountContext.Provider value={{count,dispatch}}>
+    <div>
+        ParentComponent - count={count}
+        <ComponentA />
+        <ComponentB />
+        <ComponentC />
+    </div>
+  </CountContext.Provider>
+}
+
+export default ParentComponent;
+```
+子组件A的代码：
+```
+import React,{ useState, useContext } from 'react';
+import CountContext from './CountContext';
+
+function CopmpoentA() {
+  const [param,setParam] = useState(1);
+  //引入全局共享对象，获取全局变量count，以及修改count对应的dispatch
+  const countContext = useContext(CountContext);
+
+  const inputChangeHandler = (eve) => {
+    setParam(eve.target.value);
+  }
+
+  const doHandler = () => {
+    //若想修改全局count，先获取count对应的修改抛出事件对象dispatch，然后通过dispatch将修改内容抛出
+    //抛出的修改内容为：{type:'add',param:xxx}，即告诉count的修改事件处理函数，本次修改的类型为add，参数是param
+    //这里的add和param完全是根据自己实际需求自己定义的
+    countContext.dispatch({type:'add',param:Number(param)});
+  }
+
+  const resetHandler = () => {
+    countContext.dispatch({type:'reset'});
+  }
+
+  return <div>
+        ComponentA - count={countContext.count}
+        <input type='number' value={param} onChange={inputChangeHandler} />
+        <button onClick={doHandler}>add {param}</button>
+        <button onClick={resetHandler}>reset</button>
+    </div>
+}
+
+export default CopmpoentA;
+```

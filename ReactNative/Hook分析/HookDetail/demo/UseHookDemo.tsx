@@ -1,8 +1,24 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useReducer, useState} from 'react';
 import {StyleSheet, Text, TouchableHighlight} from 'react-native';
+
+const reducer = (state: number, action: string) => {
+  switch (action) {
+    case 'add':
+      return state + 1;
+    case 'sub':
+      return state - 1;
+    case 'mul':
+      return state * 2;
+    default:
+      return state;
+  }
+};
+
 const UseHookDemo = () => {
   const initCount = 0;
   const [count, setCount] = useState(initCount);
+
+  const [count1, dispatch] = useReducer(reducer, 0);
 
   useEffect(() => {
     console.log('mount');
@@ -20,8 +36,8 @@ const UseHookDemo = () => {
   };
 
   return (
-    <TouchableHighlight style={styles.wrapper} onPress={handleClick}>
-      <Text style={styles.text}>{count}</Text>
+    <TouchableHighlight style={styles.wrapper} onPress={() => dispatch('add')}>
+      <Text style={styles.text}>{count1}</Text>
     </TouchableHighlight>
   );
 };
