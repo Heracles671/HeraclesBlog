@@ -109,3 +109,74 @@ useEffect 回调函数的执行时机：
 1. 若缺省，关心全部更新情况；   
 2. 若传值，只关心某些更新情况；   
 3. 若传值，不关心更新；
+-----
+## useContext
+避免在多层嵌套中向每层组件都传递相同的参数，提高子组件的复用性
+```
+//global-context.js
+import React from 'react';
+const GlobalContext = React.createContext(); //请注意，这里还可以给React.createContext()传入一个默认值
+//例如：const GlobalContext = React.createContext({name:'Yang',age:18})
+//假如<GlobalContext.Provider>中没有设置value的值，就会使用上面定义的默认值
+export default GlobalContext;
+
+...
+
+//component.js
+import React, { useContext } from 'react';
+import GlobalContext from './global-context';
+
+function AppComponent() {
+  //标签<GlobalContext.Provider>中向下传递数据，必须使用value这个属性，且数据必须是键值对类型的object
+  //如果不添加value，那么子组件获取到的共享数据value值是React.createContext(defaultValues)中的默认值defaultValues
+  return <div>
+    <GlobalContext.Provider value={{name:'puxiao',age:34}}>
+        <MiddleComponent />
+    </GlobalContext.Provider>
+  </div>
+}
+
+function MiddleComponent(){
+  //MiddleComponent 不需要做任何 “属性数据传递接力”，因此降低该组件数据传递复杂性，提高组件可复用性
+  return <div>
+    <ChildComponent />
+  </div>
+}
+
+function ChildComponent(){
+  const global = useContext(GlobalContext); //获取共享数据对象的value值
+  //忘掉<GlobalContext.Consumer>标签，直接用global获取需要的值
+  return <div>
+    {global.name} - {global.age}
+  </div>
+}
+
+export default AppComponent;
+```
+同时传递多个共享数据值给子组件：
+```
+import React,{ useContext } from 'react'
+
+const UserContext = React.createContext();
+const NewsContext = React.createContext();
+
+function AppComponent() {
+  return (
+    <UserContext.Provider value={{name:'puxiao'}}>
+        <NewsContext.Provider value={{title:'Hello React Hook.'}}>
+            <ChildComponent />
+        </NewsContext.Provider>
+    </UserContext.Provider>
+  )
+}
+
+function ChildComponent(){
+  const user = useContext(UserContext);
+  const news = useContext(NewsContext);
+  return <div>
+    {user.name} - {news.title}
+  </div>
+}
+
+export default AppComponent;
+```
