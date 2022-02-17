@@ -1,8 +1,15 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {StyleSheet, Text, TouchableHighlight} from 'react-native';
 const UseStateDemo = () => {
   const initCount = 0;
   const [count, setCount] = useState(initCount);
+
+  useEffect(() => {
+    console.log('mount');
+    return () => {
+      console.log('ummount');
+    };
+  }, []);
 
   const handleClick = () => {
     for (let i = 0; i < 3; i++) {
