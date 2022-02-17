@@ -353,3 +353,79 @@ function CopmpoentA() {
 
 export default CopmpoentA;
 ```
+## useCallback
+>useCallback是通过获取函数在react原型链上的引用，当即将重新渲染时，用旧值的引用去替换旧值，配合React.memo，达到“阻止组件不必要的重新渲染”。
+```
+import React from 'react'
+function Button({label,clickHandler}) {
+    //为了方便我们查看该子组件是否被重新渲染，这里增加一行console.log代码
+    console.log(`rendering ... ${label}`);
+    return <button onClick={clickHandler}>{label}</button>;
+}
+export default React.memo(Button); //使用React.memo()包裹住要导出的组件
+```
+```
+import React,{useState,useCallback,useEffect} from 'react';
+import Button from './button';
+
+function Mybutton() {
+  const [age,setAge] = useState(34);
+  const [salary,setSalary] = useState(7000);
+
+  useEffect(() => {
+    document.title = `Hooks - ${Math.floor(Math.random()*100)}`;
+  });
+
+  const clickHandler01 = () => {
+    setAge(age+1);
+  };
+
+  const clickHandler02 = () => {
+    setSalary(salary+1);
+  };
+
+  return (
+    <div>
+        {age} - {salary}
+        <Button label='Bt01' clickHandler={clickHandler01}></Button>
+        <Button label='Bt02' clickHandler={clickHandler02}></Button>
+    </div>
+  )
+}
+```
+实际运行中你会发现，无论点击哪个按钮，都会收到：
+rendering ... Bt01
+rendering ... Bt02
+```
+import React,{useState,useCallback,useEffect} from 'react';
+import Button from './button';
+
+function Mybutton() {
+  const [age,setAge] = useState(34);
+  const [salary,setSalary] = useState(7000);
+
+  useEffect(() => {
+    document.title = `Hooks - ${Math.floor(Math.random()*100)}`;
+  });
+
+  //使用useCallback()包裹住原来的处理函数
+  const clickHandler01 = useCallback(() => {
+    setAge(age+1);
+  },[age]);
+
+  //使用useCallback()包裹住原来的处理函数
+  const clickHandler02 = useCallback(() => {
+    setSalary(salary+1);
+  },[salary]);
+
+  return (
+    <div>
+        {age} - {salary}
+        <Button label='Bt01' clickHandler={clickHandler01}></Button>
+        <Button label='Bt02' clickHandler={clickHandler02}></Button>
+    </div>
+  )
+}
+```
+修改后的代码，实际运行就会发现，当点击某个按钮时，仅仅是当前按钮重新做了一次渲染，另外一个按钮则没有重新渲染，而是直接使用上一次渲染结果。
+
