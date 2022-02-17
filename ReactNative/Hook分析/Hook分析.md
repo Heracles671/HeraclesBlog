@@ -492,3 +492,125 @@ function UseMemo() {
 
 export default UseMemo;
 ```
+----
+## useRef
+它的作用是“勾住”某些组件挂载完成或重新渲染完成后才拥有的某些对象，并返回该对象的引用。该引用在组件整个生命周期中都固定不变，该引用并不会随着组件重新渲染而失效。
+
+**某些组件挂载完成或重新渲染完成后才拥有的某些对象**：
+这句话中的“某些对象”主要分为3种：JSX组件转换后对应的真实DOM对象、在useEffect中创建的变量、子组件内自定义的函数(方法)。
+
+第1：JSX组件转换后对应的真实DOM对象：
+>1、JSX中小写开头的组件看似和原生html标签相似，但是并不是真的原生标签，依然是react内置组件。  
+2、什么时候转换？ 虚拟DOM转化为真实DOM   
+3、什么时候可访问？组件挂载完成或重新渲染完成后   
+
+第2：在useEffect中创建的变量：
+```
+useEffect(() => {
+    let timer = setInterval(() => {
+        setCount(prevData => prevData +1);
+    }, 1000);
+    return () => {
+        clearInterval(timer);
+    }
+},[]);
+```
+上述代码中，请注意这个timer是在useEffect中才定义的。
+
+思考：useEffect 以外的地方，该如何获取这个 timer 的引用？  
+答：用useRef
+
+第3：子组件内自定义的函数(方法)：  
+结合useImperativeHandle才可以实现
+
+```
+//先定义一个xxRef引用变量，用于“勾住”某些组件挂载完成或重新渲染完成后才拥有的某些对象
+const xxRef = useRef(null);
+
+//针对 JSX组件，通过属性 ref={xxxRef} 进行关联
+<xxx ref={xxRef} />
+
+//针对 useEffect中的变量，通过 xxxRef.current 进行关联
+useEffect(() => {
+   xxRef.current = xxxxxx;
+},[]);
+```
+举例：
+```
+import React,{useEffect,useRef} from 'react'
+
+function Component() {
+  //先定义一个inputRef引用变量，用于“勾住”挂载网页后的输入框
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    //inputRef.current就是挂载到网页后的那个输入框，一个真实DOM，因此可以调用html中的方法focus()
+    inputRef.current.focus();
+  },[]);
+
+  return <div>
+      {/* 通过 ref 属性将 inputRef与该输入框进行“挂钩” */}
+      <input type='text' ref={inputRef} />
+    </div>
+}
+export default Component
+```
+```
+import React,{useState,useEffect,useRef} from 'react'
+
+function Component() {
+  const [count,setCount] =  useState(0);
+  const timerRef = useRef(null);//先定义一个timerRef引用变量，用于“勾住”useEffect中通过setIntervale创建的计时器
+
+  useEffect(() => {
+    //将timerRef.current与setIntervale创建的计时器进行“挂钩”
+    timerRef.current = setInterval(() => {
+        setCount((prevData) => { return prevData +1});
+    }, 1000);
+    return () => {
+        //通过timerRef.current，清除掉计时器
+        clearInterval(timerRef.current);
+    }
+  },[]);
+
+  const clickHandler = () => {
+    //通过timerRef.current，清除掉计时器
+    clearInterval(timerRef.current);
+  };
+
+  return (
+    <div>
+        {count}
+        <button onClick={clickHandler} >stop</button>
+    </div>
+  )
+}
+
+export default Component
+```
+```
+import React from 'react'
+
+const ChildComponent = React.forwardRef((props,ref) => {
+  //子组件通过将第2个参数ref 添加到内部真正的“小写开头的类似原生标签的组件”中 
+  return <button ref={ref}>{props.label}</button>
+});
+
+/* 上面的子组件直接在父组件内定义了，如果子组件是单独的.js文件，则可以通过
+   export default React.forwardRef(ChildComponent) 这种形式  */
+
+function Forward() {
+  const ref = React.useRef();//父组件定义一个ref
+  const clickHandle = () =>{
+    console.log(ref.current);//父组件获得渲染后子组件中对应的DOM节点引用
+  }
+  return (
+    <div>
+        {/* 父组件通过给子组件添加属性 ref={ref} 将ref作为参数传递给子组件 */}
+        <ChildComponent label='child bt' ref={ref} />
+        <button onClick={clickHandle} >get child bt ref</button>
+    </div>
+  )
+}
+export default Forward;
+```
