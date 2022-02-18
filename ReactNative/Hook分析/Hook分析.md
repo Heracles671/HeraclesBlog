@@ -2,6 +2,7 @@
 React 的很多钩子光靠官方文档的讲解无法真正地理解，还是要本地跑一下来验证
 ## 参考
 1. [react-hook-tutorial](https://github.com/puxiao/react-hook-tutorial)
+2. [React Hooks 最佳实践](https://mp.weixin.qq.com/s/HwlnvAh18saKwXC_nZwSHw)
 ------
 ## useState
 ```
