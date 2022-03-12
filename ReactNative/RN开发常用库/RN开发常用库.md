@@ -20,6 +20,9 @@
 14. [react-native-image-viewer](https://github.com/ascoders/react-native-image-viewer) 图片缩放
 15. [react-native-chart-kit](https://github.com/indiespirit/react-native-chart-kit) 图标库
 16. [rn-placeholder](https://github.com/mfrachet/rn-placeholder) 占位符
+17. [react-native-pager-view](https://github.com/callstack/react-native-pager-view) pagerView RN 版
+18. [react-native-tab-view](https://github.com/satya164/react-native-tab-view) tab切换 + pagerView
+19. [react-native-collapsible-tab-view#readme](https://github.com/PedroBern/react-native-collapsible-tab-view#readme) 可折叠header + tab切换 + pagerView
 ## 导航库
 1. [react-native-navigation](https://github.com/wix/react-native-navigation)
 2. [react-navigation](https://github.com/react-navigation/react-navigation)
