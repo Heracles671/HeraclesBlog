@@ -77,3 +77,381 @@ ps：由此可见，launcher启动应用采用的是隐式启动方案
 <scheme>://<host>:<port>/[<path>|<pathPrefix>|<pathPattern>]
 ```
 类似category，URI有默认值：content和file
+# Android IPC
+## 开启多进程
+1. android:process属性：只能用来控制四大组件，无法指定线程或类实例的运行进程；`:`方式指定的是私有进程
+2. JNI方式fork一个进程：不常用
+### **带来的问题**
+每一个进程对应一个虚拟机，每个虚拟机之间相互独立：
+1. 静态成员和单例模式完全失效
+2. 线程同步机制完全失效
+3. sharedPreference机制可靠性降低
+4. Application会创建多次
+
+解决办法：多进程间通信IPC
+## IPC 
+### serializable
+1. 写上serialVersionUID有助于防止反序列化失败
+2. 静态变量不参与序列化
+3. transient修饰的变量不参与序列化
+### parcelable
+1. 在反序列化时，如果对象是其他可序列化对象，需要提供当前线程的列加载器上下文
+2. parcelable主要用在内存序列化上，serializable主要用在io序列化上
+### Binder
+Book.java
+```
+package com.heracles.androidstudiouserguide.aidl;
+
+import android.os.Parcel;
+import android.os.Parcelable;
+
+public class Book implements Parcelable {
+    private String name;
+
+    public Book(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return "book name：" + name;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(this.name);
+    }
+
+    public void readFromParcel(Parcel dest) {
+        name = dest.readString();
+    }
+
+    protected Book(Parcel in) {
+        this.name = in.readString();
+    }
+
+    public static final Creator<Book> CREATOR = new Creator<Book>() {
+        @Override
+        public Book createFromParcel(Parcel source) {
+            return new Book(source);
+        }
+
+        @Override
+        public Book[] newArray(int size) {
+            return new Book[size];
+        }
+    };
+}
+
+```
+Book.aidl
+```
+// Book.aidl
+package com.heracles.androidstudiouserguide.aidl;
+
+parcelable Book;
+```
+IManagerBook.aidl
+```
+// IBookManager.aidl
+package com.heracles.androidstudiouserguide.aidl;
+import com.heracles.androidstudiouserguide.aidl.Book;
+
+interface IBookManager {
+    void basicTypes(int anInt, long aLong, boolean aBoolean, float aFloat,
+            double aDouble, String aString);
+    List<Book> getBookList();
+    void addBookInOut(inout Book book);
+}
+```
+IManagerBook.java
+```
+/*
+ * This file is auto-generated.  DO NOT MODIFY.
+ */
+package com.heracles.androidstudiouserguide.aidl;
+// Declare any non-default types here with import statements
+
+public interface IBookManager extends android.os.IInterface
+{
+  /** Default implementation for IBookManager. */
+  public static class Default implements com.heracles.androidstudiouserguide.aidl.IBookManager
+  {
+    /**
+         * Demonstrates some basic types that you can use as parameters
+         * and return values in AIDL.
+         */
+    @Override public void basicTypes(int anInt, long aLong, boolean aBoolean, float aFloat, double aDouble, java.lang.String aString) throws android.os.RemoteException
+    {
+    }
+    @Override public java.util.List<com.heracles.androidstudiouserguide.aidl.Book> getBookList() throws android.os.RemoteException
+    {
+      return null;
+    }
+    @Override public void addBookInOut(com.heracles.androidstudiouserguide.aidl.Book book) throws android.os.RemoteException
+    {
+    }
+    @Override
+    public android.os.IBinder asBinder() {
+      return null;
+    }
+  }
+  /** Local-side IPC implementation stub class. */
+  public static abstract class Stub extends android.os.Binder implements com.heracles.androidstudiouserguide.aidl.IBookManager
+  {
+    private static final java.lang.String DESCRIPTOR = "com.heracles.androidstudiouserguide.aidl.IBookManager";
+    /** Construct the stub at attach it to the interface. */
+    public Stub()
+    {
+      this.attachInterface(this, DESCRIPTOR);
+    }
+    /**
+     * Cast an IBinder object into an com.heracles.androidstudiouserguide.aidl.IBookManager interface,
+     * generating a proxy if needed.
+     */
+    public static com.heracles.androidstudiouserguide.aidl.IBookManager asInterface(android.os.IBinder obj)
+    {
+      if ((obj==null)) {
+        return null;
+      }
+      android.os.IInterface iin = obj.queryLocalInterface(DESCRIPTOR);
+      if (((iin!=null)&&(iin instanceof com.heracles.androidstudiouserguide.aidl.IBookManager))) {
+        return ((com.heracles.androidstudiouserguide.aidl.IBookManager)iin);
+      }
+      return new com.heracles.androidstudiouserguide.aidl.IBookManager.Stub.Proxy(obj);
+    }
+    @Override public android.os.IBinder asBinder()
+    {
+      return this;
+    }
+    @Override public boolean onTransact(int code, android.os.Parcel data, android.os.Parcel reply, int flags) throws android.os.RemoteException
+    {
+      java.lang.String descriptor = DESCRIPTOR;
+      switch (code)
+      {
+        case INTERFACE_TRANSACTION:
+        {
+          reply.writeString(descriptor);
+          return true;
+        }
+        case TRANSACTION_basicTypes:
+        {
+          data.enforceInterface(descriptor);
+          int _arg0;
+          _arg0 = data.readInt();
+          long _arg1;
+          _arg1 = data.readLong();
+          boolean _arg2;
+          _arg2 = (0!=data.readInt());
+          float _arg3;
+          _arg3 = data.readFloat();
+          double _arg4;
+          _arg4 = data.readDouble();
+          java.lang.String _arg5;
+          _arg5 = data.readString();
+          this.basicTypes(_arg0, _arg1, _arg2, _arg3, _arg4, _arg5);
+          reply.writeNoException();
+          return true;
+        }
+        case TRANSACTION_getBookList:
+        {
+          data.enforceInterface(descriptor);
+          java.util.List<com.heracles.androidstudiouserguide.aidl.Book> _result = this.getBookList();
+          reply.writeNoException();
+          reply.writeTypedList(_result);
+          return true;
+        }
+        case TRANSACTION_addBookInOut:
+        {
+          data.enforceInterface(descriptor);
+          com.heracles.androidstudiouserguide.aidl.Book _arg0;
+          if ((0!=data.readInt())) {
+            _arg0 = com.heracles.androidstudiouserguide.aidl.Book.CREATOR.createFromParcel(data);
+          }
+          else {
+            _arg0 = null;
+          }
+          this.addBookInOut(_arg0);
+          reply.writeNoException();
+          if ((_arg0!=null)) {
+            reply.writeInt(1);
+            _arg0.writeToParcel(reply, android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
+          }
+          else {
+            reply.writeInt(0);
+          }
+          return true;
+        }
+        default:
+        {
+          return super.onTransact(code, data, reply, flags);
+        }
+      }
+    }
+    private static class Proxy implements com.heracles.androidstudiouserguide.aidl.IBookManager
+    {
+      private android.os.IBinder mRemote;
+      Proxy(android.os.IBinder remote)
+      {
+        mRemote = remote;
+      }
+      @Override public android.os.IBinder asBinder()
+      {
+        return mRemote;
+      }
+      public java.lang.String getInterfaceDescriptor()
+      {
+        return DESCRIPTOR;
+      }
+      /**
+           * Demonstrates some basic types that you can use as parameters
+           * and return values in AIDL.
+           */
+      @Override public void basicTypes(int anInt, long aLong, boolean aBoolean, float aFloat, double aDouble, java.lang.String aString) throws android.os.RemoteException
+      {
+        android.os.Parcel _data = android.os.Parcel.obtain();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
+        try {
+          _data.writeInterfaceToken(DESCRIPTOR);
+          _data.writeInt(anInt);
+          _data.writeLong(aLong);
+          _data.writeInt(((aBoolean)?(1):(0)));
+          _data.writeFloat(aFloat);
+          _data.writeDouble(aDouble);
+          _data.writeString(aString);
+          boolean _status = mRemote.transact(Stub.TRANSACTION_basicTypes, _data, _reply, 0);
+          if (!_status && getDefaultImpl() != null) {
+            getDefaultImpl().basicTypes(anInt, aLong, aBoolean, aFloat, aDouble, aString);
+            return;
+          }
+          _reply.readException();
+        }
+        finally {
+          _reply.recycle();
+          _data.recycle();
+        }
+      }
+      @Override public java.util.List<com.heracles.androidstudiouserguide.aidl.Book> getBookList() throws android.os.RemoteException
+      {
+        android.os.Parcel _data = android.os.Parcel.obtain();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
+        java.util.List<com.heracles.androidstudiouserguide.aidl.Book> _result;
+        try {
+          _data.writeInterfaceToken(DESCRIPTOR);
+          boolean _status = mRemote.transact(Stub.TRANSACTION_getBookList, _data, _reply, 0);
+          if (!_status && getDefaultImpl() != null) {
+            return getDefaultImpl().getBookList();
+          }
+          _reply.readException();
+          _result = _reply.createTypedArrayList(com.heracles.androidstudiouserguide.aidl.Book.CREATOR);
+        }
+        finally {
+          _reply.recycle();
+          _data.recycle();
+        }
+        return _result;
+      }
+      @Override public void addBookInOut(com.heracles.androidstudiouserguide.aidl.Book book) throws android.os.RemoteException
+      {
+        android.os.Parcel _data = android.os.Parcel.obtain();
+        android.os.Parcel _reply = android.os.Parcel.obtain();
+        try {
+          _data.writeInterfaceToken(DESCRIPTOR);
+          if ((book!=null)) {
+            _data.writeInt(1);
+            book.writeToParcel(_data, 0);
+          }
+          else {
+            _data.writeInt(0);
+          }
+          boolean _status = mRemote.transact(Stub.TRANSACTION_addBookInOut, _data, _reply, 0);
+          if (!_status && getDefaultImpl() != null) {
+            getDefaultImpl().addBookInOut(book);
+            return;
+          }
+          _reply.readException();
+          if ((0!=_reply.readInt())) {
+            book.readFromParcel(_reply);
+          }
+        }
+        finally {
+          _reply.recycle();
+          _data.recycle();
+        }
+      }
+      public static com.heracles.androidstudiouserguide.aidl.IBookManager sDefaultImpl;
+    }
+    static final int TRANSACTION_basicTypes = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
+    static final int TRANSACTION_getBookList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
+    static final int TRANSACTION_addBookInOut = (android.os.IBinder.FIRST_CALL_TRANSACTION + 2);
+    public static boolean setDefaultImpl(com.heracles.androidstudiouserguide.aidl.IBookManager impl) {
+      // Only one user of this interface can use this function
+      // at a time. This is a heuristic to detect if two different
+      // users in the same process use this function.
+      if (Stub.Proxy.sDefaultImpl != null) {
+        throw new IllegalStateException("setDefaultImpl() called twice");
+      }
+      if (impl != null) {
+        Stub.Proxy.sDefaultImpl = impl;
+        return true;
+      }
+      return false;
+    }
+    public static com.heracles.androidstudiouserguide.aidl.IBookManager getDefaultImpl() {
+      return Stub.Proxy.sDefaultImpl;
+    }
+  }
+  /**
+       * Demonstrates some basic types that you can use as parameters
+       * and return values in AIDL.
+       */
+  public void basicTypes(int anInt, long aLong, boolean aBoolean, float aFloat, double aDouble, java.lang.String aString) throws android.os.RemoteException;
+  public java.util.List<com.heracles.androidstudiouserguide.aidl.Book> getBookList() throws android.os.RemoteException;
+  public void addBookInOut(com.heracles.androidstudiouserguide.aidl.Book book) throws android.os.RemoteException;
+}
+
+```
+```
+   |<-yield-|      |<-----------------------------------------------------------------------------|
+client--远程请求-->binder--写入参数-->data--transact-->service--onTransact-->线程池--写入结果-->reply--|
+   |<----返回数据----|
+```
+## android ipc 中的几种实现
+### bundle
+在intent中传递bundle，因为bundle实现了parcelable接口
+### 共享文件
+注意并法问题，不建议把sharedPreference作为共享文件载体，因为它存在缓存，数据可能不准确
+### messager
+底层还是基于aidl来实现的，并且是串行处理消息的：首先，客户端拿到服务端的 messager，然后发送消息，replyTo 字段中带上客户端的 messager；服务端拿到客户端的 messager 后，通过它向客户端发送消息，客户端就可以收到了
+### aidl
+支持的数据类型：
+1. 基本数据类型: int, long, char, boolean, double
+2. String, CharSequence
+3. List: 只支持 ArrayList
+4. Map: 只支持 HashMap
+5. Parcelable: 所有实现了 Parcelable 接口的对象
+6. AIDL: 所有的 AIDL 接口本身也可以在 AIDL 文件中使用
+>其中，自定义的 Parcelable 对象和 AIDL 接口必须显示 import 进来
+
+RemoteCallbackList 是专门用于删除跨进程 listener 的接口
+
+Binder 可能会死亡，用 DeathRecipient 监听
+
+在 AIDL 中使用权限验证：判读 permission，通过 onBinder 或 onTransact 方法控制
+### contentProvider
+底层使用 binder 实现，系统做了封装，没有 aidl 那么复杂，无需了解底层细节就可以实现 IPC
+### socket
+客户端使用：Socket 类；服务端使用：ServerSocket 类
