@@ -99,7 +99,7 @@ ps：由此可见，launcher启动应用采用的是隐式启动方案
 2. parcelable主要用在内存序列化上，serializable主要用在io序列化上
 ### Binder
 Book.java
-```
+```java
 package com.heracles.androidstudiouserguide.aidl;
 
 import android.os.Parcel;
@@ -178,7 +178,7 @@ interface IBookManager {
 }
 ```
 IManagerBook.java
-```
+```java
 /*
  * This file is auto-generated.  DO NOT MODIFY.
  */
