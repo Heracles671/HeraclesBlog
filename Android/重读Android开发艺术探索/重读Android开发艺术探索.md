@@ -455,3 +455,7 @@ Binder 可能会死亡，用 DeathRecipient 监听
 底层使用 binder 实现，系统做了封装，没有 aidl 那么复杂，无需了解底层细节就可以实现 IPC
 ### socket
 客户端使用：Socket 类；服务端使用：ServerSocket 类
+
+# 四大组件的工作过程
+## Activity
+整个启动过程涉及 binder IPC 和 类加载器
