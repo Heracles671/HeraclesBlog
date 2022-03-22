@@ -458,4 +458,6 @@ Binder 可能会死亡，用 DeathRecipient 监听
 
 # 四大组件的工作过程
 ## Activity
-整个启动过程涉及 binder IPC 和 类加载器
+整个启动过程涉及 binder IPC 、H Handler 和类加载器
+## Service
+整个启动过程涉及 binder IPC 、H Handler 和类加载器
