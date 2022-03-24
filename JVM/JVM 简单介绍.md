@@ -130,6 +130,7 @@ ClassLoader.getSystemClassLoader()
 // 方式四：获取调用者的 ClassLoader
 DriverManager.getCallerClassLoader()
 ```
+![](https://www.pianshen.com/images/387/9e8821a93a0897c81c61954d1404ad33.png)
 ### 类加载机制--双亲委派机制
 jvm对class文件采用的是按需加载的方式，当需要使用该类时，jvm才会将它的class文件加载到内存中产生class对象。
 
