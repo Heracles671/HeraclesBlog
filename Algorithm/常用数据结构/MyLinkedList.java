@@ -1,5 +1,3 @@
-package com.zozo.zozochina.ui.brand.view;
-
 public class MyLinkedList {
 
     private static class Node {

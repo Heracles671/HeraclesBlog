@@ -1,5 +1,3 @@
-package com.zozo.zozochina.ui.brand.view;
-
 public class MyArray {
     private int[] array;
     private int size;
