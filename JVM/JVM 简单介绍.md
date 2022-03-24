@@ -76,9 +76,72 @@ Java 堆根据对象存活时间的不同，Java 堆还被分为年轻代、老�
 
 学到这里，一个 Java 文件就加载到内存中了，并且 Java 类信息就会存储在我们的方法区中。如果创建对象，那么对象数据就会存放在 Java 堆中。如果调用方法，就会用到 PC 寄存器、Java 虚拟机栈、本地方法栈等结构
 
-# JVM 类加载机制
+# JVM 执行字节码过程
 JVM 虚拟机执行 class 字节码的过程可以分为七个阶段：加载、验证、准备、解析、初始化、使用、卸载。
 
+![](https://segmentfault.com/img/bVcHO1t)
+## 加载
+![类加载器分类](https://segmentfault.com/img/bVcHO1F)
+
+- 第一个：启动类/引导类：Bootstrap ClassLoader
+>这个类加载器使用C/C++语言实现的，嵌套在JVM内部，java程序无法直接操作这个类。
+它用来加载Java核心类库，如：JAVA_HOME/jre/lib/rt.jar、resources.jar、sun.boot.class.path路径下的包，用于提供jvm运行所需的包。
+>
+>并不是继承自java.lang.ClassLoader，它没有父类加载器
+>
+>它加载扩展类加载器和应用程序类加载器，并成为他们的父类加载器
+>
+>出于安全考虑，启动类只加载包名为：java、javax、sun开头的类
+
+- 第二个：扩展类加载器：Extension ClassLoader
+>Java语言编写，由sun.misc.Launcher$ExtClassLoader实现，我们可以用Java程序操作这个加载器
+派生继承自java.lang.ClassLoader，父类加载器为启动类加载器
+>
+>从系统属性：java.ext.dirs目录中加载类库，或者从JDK安装目录：jre/lib/ext目录下加载类库。我们就可以将我们自己的包放在以上目录下，就会自动加载进来了。
+
+- 第三个：应用程序类加载器：Application Classloader
+>Java语言编写，由sun.misc.Launcher$AppClassLoader实现。
+派生继承自java.lang.ClassLoader，父类加载器为启动类加载器
+>
+>它负责加载环境变量classpath或者系统属性java.class.path指定路径下的类库
+>
+>它是程序中默认的类加载器，我们Java程序中的类，都是由它加载完成的。
+>
+>我们可以通过ClassLoader#getSystemClassLoader()获取并操作这个加载器
+
+- 第四个：自定义加载器
+>一般情况下，以上3种加载器能满足我们日常的开发工作，不满足时，我们还可以自定义加载器
+比如用网络加载Java类，为了保证传输中的安全性，采用了加密操作，那么以上3种加载器就无法加载这个类，这时候就需要自定义加载器
+
+### 自定义加载器实现步骤
+
+>继承java.lang.ClassLoader类，重写findClass()方法
+如果没有太复杂的需求，可以直接继承URLClassLoader类，重写loadClass方法，具体可参考AppClassLoader和ExtClassLoader。
+### 获取ClassLoader几种方式
+
+>它是一个抽象类，其后所有的类加载器继承自 ClassLoader（不包括启动类加载器）
+```java
+// 方式一：获取当前类的 ClassLoader
+clazz.getClassLoader()
+// 方式二：获取当前线程上下文的 ClassLoader
+Thread.currentThread().getContextClassLoader()
+// 方式三：获取系统的 ClassLoader
+ClassLoader.getSystemClassLoader()
+// 方式四：获取调用者的 ClassLoader
+DriverManager.getCallerClassLoader()
+```
+### 类加载机制--双亲委派机制
+jvm对class文件采用的是按需加载的方式，当需要使用该类时，jvm才会将它的class文件加载到内存中产生class对象。
+
+![双亲委派机制](https://segmentfault.com/img/bVcHO1J)
+
+- 工作原理
+
+（1）如果一个类加载器接收到了类加载的请求，它自己不会先去加载，会把这个请求委托给父类加载器去执行。
+
+（2）如果父类还存在父类加载器，则继续向上委托，一直委托到启动类加载器：Bootstrap ClassLoader
+
+（3）如果父类加载器可以完成加载任务，就返回成功结果，如果父类加载失败，就由子类自己去尝试加载，如果子类加载失败就会抛出ClassNotFoundException异常，这就是双亲委派模式
 ## 准备
 当完成字节码文件的校验之后，JVM 便会开始为类变量分配内存并初始化。这里需要注意两个关键点，即内存分配的对象以及初始化的类型。
 
@@ -236,3 +299,4 @@ Stop-The-World，中文一般翻译为全世界暂停，是指在进行垃圾回
 在 Stop-The-World 这段时间里，所有非垃圾回收线程都无法工作，都暂停下来。只有等到垃圾回收线程工作完成才可以继续工作。可以看出，Stop-The-World 时间的长短将关系到应用程序的响应时间，因此在 GC 过程中，Stop-The-World 的时间是一个非常重要的指标。
 # 参考
 [1. JVM 入门](https://www.cnblogs.com/chanshuyi/p/jvm_serial_00_why_learn_jvm.html) 
+[2. 类加载机制](https://segmentfault.com/a/1190000037574626)
