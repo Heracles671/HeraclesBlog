@@ -461,3 +461,32 @@ Binder 可能会死亡，用 DeathRecipient 监听
 整个启动过程涉及 binder IPC 、H Handler 和类加载器
 ## Service
 整个启动过程涉及 binder IPC 、H Handler 和类加载器
+
+# View 的世界
+
+# Android 消息机制
+ Android 的消息机制主要是指 Handler 的运行机制，Handler 的运行需要底层 MessageQueue 和 Looper 的支撑。整个 Handler 干的活其实就是线程切换。
+
+ MessageQueue 是一个单链表结构，用来存储消息列表。Looper 是一个消息循环，以无限循环的形式来检查 MQ 是否有新消息。Hanlder 使用当前线程的 Lopper 来创建消息循环系统。
+
+ Handler 通过 ThreadLocal 获取当前线程的 Lopper；线程默认没有 Lopper，所以需要使用 Handler 就必须为线程创建 Lopper。
+
+ ## Handler 的使用
+ 发送消息：
+ 1. sendMessage(Message)
+ 2. post(Runnable)
+
+ 处理消息：
+ 1. 派生子类实现 handleMessage 方法
+ 2. Handler 构造方法添加 Calback 参数
+ # Android 的线程和线程池
+## Android 中的线程
+1. AsyncTask：子线程中访问 UI，封装了 线程池（AT 有两个线程池） 和 Handler
+2. HandlerThread：带有 Handler 的线程
+3. IntentService：优先级很高的后台线程
+## Android 中的线程池
+ThreadPoolExecutor：
+1. FixedThreadPool：只有固定核心线程，任务队列没有大小限制，无超机制时，适合执行快速响应界面的请求
+2. CachedThreadPool：只有任意多非核心线程，60s超时机制，适合执行大量的耗时较少的任务
+3. ScheduledThreadPool：固定核心线程，任意多非核心线程，0s超时机制，适合执行固定周期的重复任务
+4. SingleThreadPool：一个核心线程，确保所有任务在一个线程中执行，避免线程同步问题
