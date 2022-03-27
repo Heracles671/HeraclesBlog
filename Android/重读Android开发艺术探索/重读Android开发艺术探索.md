@@ -463,6 +463,46 @@ Binder 可能会死亡，用 DeathRecipient 监听
 整个启动过程涉及 binder IPC 、H Handler 和类加载器
 
 # View 的世界
+## 基本工具
+1. MotionEvent：获取滑动事件
+2. TouchSlop：获取滑动最小距离
+3. VelocityTracker：获取滑动速度
+4. GestureDetector：监听手势
+5. Scroller：实现弹性滑动
+## View 的滑动
+滑动的方式：
+1. View 本身提供的 scrollTo、scrollBy 方法：改变的是 View 内容的位置，而不是 View 在布局中的位置
+2. 通过动画给 View 施加平移效果：操作 View 的 translationX 和 translationY 属性。View 动画只是对 View 的影像做操作，并不真正改变 View 的位置参数，而属性动画并不会这样
+3. 改变 View 的 LayoutParams 使得 View 重新布局：通过 MarginLayout 改变 margin 值也可以实现
+## 弹性动画
+核心思想：将一次大的滑动分成若干次小的滑动并在一个时间段内完成。
+1. Scroller：配合 View 的 computeScroll 方法实现动画；也可以使用属性动画来实现；这两个方法底层都是调用 View 的 ScrollTo 方法来实现滑动
+2. handler#postDelay
+3. Thread#sleep
+## View 的事件分发机制
+1. dispatchTouchEvent(MotionEvent ev)
+2. onInterceptTouchEvent(MotionEvent ev)
+3. onTouchEvent(MotionEvent ev)
+```java
+public boolean dispatchTouchEvent(MotionEvent ev) {
+  boolean consume = false;
+  if (onInterceptTouchEvent(ev)) {
+    comsume = onTouchEvent(ev);
+  } else {
+    comsume = child.dispatchTouchEvent(ev);
+  }
+  return comsume;
+}
+```
+当一个 View 需要处理事件时，如果它设置了 OnTouchListener，那么 OnTouchListener 的 onTouch 方法会被调用。如果 onTouch 返回 false，则当前 View 的 onTouchEvent 方法会被调用，如果返回 true，则不会被调用。在 onTouchEvent 方法中，如果当前 View 设置有 OnClickListener，那么它的 onClick 方法会被调用。
+## 滑动冲突
+1. 外部滑动方向和内部滑动方向不一致：判断水平或竖直方向上哪个值大来判断滑动方向
+2. 外部滑动方向和内部滑动方向一致：根据业务需求判断由内部还是外部滑动
+3. 上面两种情况嵌套的情况：根据业务需求判断由内部还是外部滑动
+
+解决方法：
+1. 内部拦截法：重写父容器的 onInterceptTouchEvent 方法
+2. 外部拦截法：重写子元素的 dispatchTouchEvent 方法，配合 requestDisallowInterceptTouchEvent 方法在子元素中实现拦截；重写父容器的 onInterceptTouchEvent 方法，拦截除 ACTION_DOWN 以外的事件
 
 # Android 消息机制
  Android 的消息机制主要是指 Handler 的运行机制，Handler 的运行需要底层 MessageQueue 和 Looper 的支撑。整个 Handler 干的活其实就是线程切换。
