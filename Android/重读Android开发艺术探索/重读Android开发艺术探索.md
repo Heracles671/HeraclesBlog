@@ -474,7 +474,7 @@ Binder 可能会死亡，用 DeathRecipient 监听
 1. View 本身提供的 scrollTo、scrollBy 方法：改变的是 View 内容的位置，而不是 View 在布局中的位置
 2. 通过动画给 View 施加平移效果：操作 View 的 translationX 和 translationY 属性。View 动画只是对 View 的影像做操作，并不真正改变 View 的位置参数，而属性动画并不会这样
 3. 改变 View 的 LayoutParams 使得 View 重新布局：通过 MarginLayout 改变 margin 值也可以实现
-## 弹性动画
+## 弹性滑动
 核心思想：将一次大的滑动分成若干次小的滑动并在一个时间段内完成。
 1. Scroller：配合 View 的 computeScroll 方法实现动画；也可以使用属性动画来实现；这两个方法底层都是调用 View 的 ScrollTo 方法来实现滑动
 2. handler#postDelay
@@ -503,7 +503,76 @@ public boolean dispatchTouchEvent(MotionEvent ev) {
 解决方法：
 1. 内部拦截法：重写父容器的 onInterceptTouchEvent 方法
 2. 外部拦截法：重写子元素的 dispatchTouchEvent 方法，配合 requestDisallowInterceptTouchEvent 方法在子元素中实现拦截；重写父容器的 onInterceptTouchEvent 方法，拦截除 ACTION_DOWN 以外的事件
+## MeasureSpec
+在测量过程中，系统会将 View 的 LayoutParams 根据父容器所施加的规则转换成对应的 MeasureSpec，然后再根据这个 MeasureSpec 来测量出 View 的宽高，这里的宽高是测量值，并不一定等于最终值。
+`MeasureSpec = SpecMode + SpecSize`
+## View 的工作流程
+view 的工作流程主要指 measure、layout、draw三个流程，及测量、布局和绘制；其中测量确定 View 的测量宽高，layout 确定 View 的最终宽高和四个顶点的位置，而 draw 则将 View 绘制到屏幕上。
+### measure
+1. view：直接继承 View 的自定义控件需要重写 onMeasure 方法并设置 wrap_content 时的自身大小，否则在布局中使用 wrap_content 就相当于使用 match_parent 时的自身大小。在代码中，只需要给 View 制定一个默认的内部宽高，并在 wrap_content 时设置次宽高即可。
+2. viewGroup：在具体实现类里进行 onMeasure 调用，并且负责测量子 View
 
+在 Activity 中获取 View 的宽高：
+1. Activity/View#onWindowFocusChanged
+2. view.post(rnnnable)
+3. ViewTreeObserver
+4. view.measure(int widthMeasureSpec, int heightMeasureSpec)
+### layout
+首先会通过 setFrame 方法来设定View的四个顶点的位置，即初始化 mLeft, mRight, mTop, mBottom 四个值。除非你自己手动修改layout方法的参数，在几乎所有情况下，测量宽高和最终宽高都是相等的。
+### draw
+draw 的过程就是将 View 绘制到屏幕上，步骤如下：
+1. 绘制背景 background.draw(canvas);
+2. 绘制自己（onDraw）
+3. 绘制 children（dispatchDraw）
+4. 绘制装饰（onDrawScrollBars）
+## 自定义 View
+几种自定义方法分类：
+1. 继承 View 重写 onDraw 方法
+2. 继承 ViewGroup 派生特殊的 Layout 方法
+3. 继承特定的 View（比如 TextView）
+4. 继承特定的 ViewGroup（比如 LinearLayout）
+
+注意事项：
+1. 让 View 支持 wrap_content
+2. 如果有必要，让 View 支持 padding
+3. 尽量不要在 View 中使用 handler，没必要
+4. View 中如果有线程或者动画，需要及时停止，参考 View#onDetachedFromWindow
+5. View 带有滑动嵌套时，需要处理好滑动冲突
+
+自定义属性：
+1. 在 values 目录下常见自定义属性的 XML，比如 attrs.xml
+2. 在 View 的构造方法中解析自定义属性的值并作相应处理
+3. 在布局文件中使用自定义属性
+# window 和 WindowManager
+WindowManager 是外界访问 window 的入口，window 的具体实现位于 WindowManagerService中，WindowManager 和 WindowManagerService 的交互是一次 IPC 过程。WindowManager 所提供的功能很简单：
+1. addView
+2. updateViewLayout
+3. removeView
+## window 的内部机制
+每一个 window 都对应着一个 view 和一个 viewRootImpl，window 和 view 通过 viewRootImpl 来建立联系，因此 window 并不是实际存在的，它是以 view 的形式存在。
+### 添加 window
+添加 window：通过 windowManager 的 addView 来实现，windowManager 是一个接口，它的真正实现是 windowManagerImpl。windowManagerImpl 通过桥接模式把任务传递给 wimdowManagerGlobal 来实现。
+1. 检查参数是否合法，如果是子 window 那么还需要调整一次布局参数
+2. 创建 viewRootImpl 并将 view 添加在列表中
+3. 通过 viewRootImpl 来更新界面，并通过 ipc 拿到 windowManagerService，从而完成 window 的添加
+### 删除 window
+和添加过程类似，都是先通过 winddowManagerImpl 后，再进一步通过 wimdowManagerGlobal 来实现的
+### 更新 window
+和添加过程类似，都是先通过 winddowManagerImpl 后，再进一步通过 wimdowManagerGlobal 来实现的。在此过程中，不仅会重新对 View 进行重绘，还会进行一次 IPC 更新 window
+## window 的创建过程
+### activity 的 window 创建过程
+在 setContentView 方法中，通过 window 设置视图内容，window 的具体实现是 phoneWindow：
+1. 如果没有 decorView，就创建它
+2. 将 view 添加到 decorView 的 mContentParent 中
+3. 回调 activity 的 onContentChanged 方法通知 activity 视图已经发生改变
+### dialog 的 window 创建过程
+1. 创建 window
+2. 初始化 decorView，并将 dialog 的视图添加到 decorView 中
+3. 将 decorView 添加到 window 中并显示
+### toast 的 window 创建过程
+toast 和 dialog 不同，由于 toast 具有定时取消功能，所以系统采用了 handler。在 toast 内部有两类 IPC 过程：
+1. toast 访问 notificationManagerService
+2. notificationManagerService 回调 toast 里的 TN 接口
 # Android 消息机制
  Android 的消息机制主要是指 Handler 的运行机制，Handler 的运行需要底层 MessageQueue 和 Looper 的支撑。整个 Handler 干的活其实就是线程切换。
 
