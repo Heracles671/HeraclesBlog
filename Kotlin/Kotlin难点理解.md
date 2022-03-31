@@ -1,6 +1,6 @@
 1. 匿名函数和lambda表达式
 ```
- val a = fun (param: Int) : String {
+    val a = fun (param: Int) : String {
         return param.toString()
     }
     
