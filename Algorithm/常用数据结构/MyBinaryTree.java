@@ -3,7 +3,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Stack;
 
-public class BinaryTree {
+public class MyBinaryTree {
 
     private static class TreeNode {
         int data;
