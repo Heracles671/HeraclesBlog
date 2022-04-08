@@ -594,8 +594,14 @@ toast 和 dialog 不同，由于 toast 具有定时取消功能，所以系统�
 2. HandlerThread：带有 Handler 的线程
 3. IntentService：优先级很高的后台线程
 ## Android 中的线程池
-ThreadPoolExecutor：
-1. FixedThreadPool：只有固定核心线程，任务队列没有大小限制，无超机制时，适合执行快速响应界面的请求
-2. CachedThreadPool：只有任意多非核心线程，60s超时机制，适合执行大量的耗时较少的任务
-3. ScheduledThreadPool：固定核心线程，任意多非核心线程，0s超时机制，适合执行固定周期的重复任务
-4. SingleThreadPool：一个核心线程，确保所有任务在一个线程中执行，避免线程同步问题
+ThreadPoolExecutor 的执行流程：
+1. 如果线程池中的线程数量未达到核心线程数，那么会直接启动一个核心线程来执行任务
+2. 如果线程池中的线程数量达到或者超过核心线程数，那么任务会被插入到任务队列中排队执行
+3. 如果步骤2中无法将任务插到任务队列中，这往往是由于任务队列已满，这个时候如果线程数量未达到线程池规定的最大值，那么会立即启动一个非核心线程来执行任务
+4. 如果步骤3中的线程数达到线程池规定的最大值，那么就拒绝执行任务，ThreadPoolExecutor 会调用 RejectExecutionHandler 的 rejectedException 方法来通知调用者
+
+几个常用线程池类型：
+1. FixedThreadPool：固定核心线程，固定非核心线程，任务队列没有大小限制，无超机制时，适合执行快速响应界面的请求
+2. CachedThreadPool：无核心线程，任意多非核心线程，任务队列为空，60s超时机制，适合执行大量的耗时较少的任务
+3. ScheduledThreadPool：固定核心线程，任意多非核心线程，任务队列没有大小限制，10ms超时机制，适合执行固定周期的重复任务
+4. SingleThreadPool：一个核心线程，最多一个非核心线程，任务队列没有大小限制，无超机制时，确保所有任务在一个线程中执行，避免线程同步问题
