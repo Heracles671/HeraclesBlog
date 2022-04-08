@@ -83,3 +83,135 @@ try {
         }
     }
 ```
+# 线程交互
+1. 开启其他线程
+2. 关闭其他线程
+3. 等到其他线程
+## interrupt 与 isInterrupt() 配合操作
+线程收到关闭消息，自己停止任务执行；如果线程处于睡眠状态，则直接抛例外
+```java
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
+                for (int i = 0; i < 1_000_000; i++) {
+                    if (isInterrupted()) {
+                        return;
+                    }
+                    System.out.println("number: " + i );
+                }
+            }
+        };
+        
+        thread.start();
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        thread.interrupt();
+```
+## wait notify notifyAll
+由 Monitor 来控制线程的等待与唤醒状态，所以 wait notify 方法全都定义在 object 对象内
+```java
+    private String sharedString;
+
+    private synchronized void initString() {
+        sharedString = "test";
+        notifyAll();
+    }
+
+    private synchronized void printString() {
+        while (sharedString == null) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        System.out.println("String: " + sharedString);
+    }
+
+    private void test2() {
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                initString();
+            }
+        });
+        thread.start();
+
+        Thread thread1 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                printString();
+            }
+        });
+
+        thread1.start();
+
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        
+        System.out.println("aa");
+    }
+```
+
+join() 相当于一个简化版的 wait(), 并且会自动回到执行线程。上述代码中，主线程执行到 join() 方法后会处于等待状态，等到 thread 线程执行完后，主线程会继续往下执行，打印 “aa” 。这个方法相当于把并行执行的线程编程串行执行。同样的代码可以改写如下：
+```java
+    private String sharedString;
+
+    private synchronized void initString() {
+        sharedString = "test";
+    }
+
+    private synchronized void printString() {
+        System.out.println("String: " + sharedString);
+    }
+
+    private void test2() {
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                initString();
+            }
+        });
+        thread.start();
+
+        Thread thread1 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    thread.join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                printString();
+            }
+        });
+        thread1.start();
+    }
+```
+yield() 方法会给同级别其他线程让出时间片，并不会等待，等到下次就会直接加入竞争资源队列中
