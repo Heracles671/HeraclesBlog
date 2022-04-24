@@ -27,3 +27,7 @@ public final class Singleton {
 [JVM 类加载机制](https://www.cnblogs.com/chanshuyi/p/jvm_serial_07_jvm_class_loader_mechanism.html)
 
 [类初始化加锁](https://tuonioooo-notebook.gitbook.io/java-concurrent/di-san-zhang-java-nei-cun-mo-xing/shuang-zhong-jian-cha-suo-ding-yu-yan-chi-chu-shi-hua/ji-yu-lei-chu-shi-hua-de-jie-jue-fang-an)
+
+到这里应该可以比较好的理解 kotlin object 单例模式了。但事情还没完，关于 Java 单例中的双重检查模式为啥这样写呢？volatile、synchronize 关键字的作用是什么？
+# Java 多线程的同步机制
+todo
