@@ -32,6 +32,29 @@ int main(int argc, char *argv[])
   // int a = exec("/echo", args);
   // printf("exec error: %d\n", a);
 
+  // 读写函数示例
+  // char buf[512];
+  // int n;
+
+  // for (;;)
+  // {
+  //   n = read(0, buf, sizeof buf);
+  //   if (n == 0)
+  //   {
+  //     break;
+  //   }
+  //   if (n < 0)
+  //   {
+  //     fprintf(2, "read error\n");
+  //     exit(1);
+  //   }
+  //   if (write(1, buf, n) != n)
+  //   {
+  //     fprintf(2, "write error\n");
+  //     exit(1);
+  //   }
+  // }
+
   if (argc != 2)
   {
     printf("error: usage -> sleep 100 \n");
